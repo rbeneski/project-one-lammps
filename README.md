@@ -1,2 +1,2 @@
 # project-one-lammps
-First research assignment
+First coding assignment for research summer 2016
