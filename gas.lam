@@ -1,0 +1,62 @@
+#number of particles
+variable npart equal 100
+
+units lj
+dimension 2
+atom_style atomic
+boundary p p p
+neighbor 0.5 bin
+neigh_modify every 1 delay 0 check yes
+
+# define 2D box region
+region box block -10 10 -10 10 -0.1 0.1
+
+#create the simulation box with one type of particle
+create_box 1 box
+
+#put z=0 all the time
+fix 2d all enforce2d
+
+#put particles with type 1 randomly into the box
+create_atoms 1 random ${npart} 324523 box
+
+#all particles has mass 1
+mass	*	1
+
+#Soft pair interaction between all particles
+pair_style soft 1.0
+pair_coeff * * 10.0
+
+#velocity distribution corresponding to a temperature of 2.0
+velocity all create 2.0 34234123 dist gaussian
+
+#minimize energy first to avoid overlapping particles
+minimize 1e-4 1e-4 1000 1000
+reset_timestep 0
+
+#save images
+shell "mkdir img"
+shell "rm img/*"
+dump	img all image 1000 img/t*.jpg	type type adiam 1.0 zoom 1.7
+dump_modify img backcolor white boxcolor black
+dump_modify img pad 6
+
+
+
+
+
+#integrate Newtons equation of motion with stochastic kicks and friction
+#the kicks and friction model the effect of temperature
+
+fix integrator all nve
+
+#output time step, temperature, average kinetic and potential energy 
+thermo_style custom step temp ke pe
+thermo		100
+
+#time step of integrator
+timestep	0.001
+
+#number of steps to run
+run		100000
+
