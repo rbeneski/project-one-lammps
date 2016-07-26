@@ -1,0 +1,52 @@
+#number of particles
+variable npart equal 100
+
+units		real
+dimension	3
+atom_style	atomic
+atom_modify	sort 10000 20
+boundary	p p p
+neighbor	2.0 bin
+neigh_modify	every 1 delay 1 check yes
+
+# define 3D box region
+region box block -10 10 -10 10 -10 10
+
+#create simulation box with one type of particle
+create_box 1 box
+
+#put particles with type 1 randomly into the box
+create_atoms 1 random ${npart} 324523 box
+
+#all particles has mass 28g/mol
+mass	*	28
+
+#velocity distribuion corresponding to a temperature of 298 K
+velocity all create 298.0 34234123 dist gaussian
+
+#minimize energy first to avoid overlapping particles
+minimize 1e-4 1e-4 1000 1000
+reset_timestep 0
+
+#save images
+shell "mkdir N3D1"
+shell "rm N3D1/*"
+dump		img all image 1000 img/t*.jpg	type type adiam 1.0 zoom 1.7
+dump_modify	img backcolor white boxcolor black
+dump_modify	img pad 6
+
+#integrate Newtons equation of motion with stochastic kicks and friction
+#the kicks and friction model the effect of temperature
+
+fix integrator all nve
+
+#output time step, temperature, average kenetic and potential energy, pressure
+thermo_style custom step temp ke pe press
+thermo		100
+
+#time step of integrator
+timestep	0.001
+
+#number of steps to run
+run		100000
+
