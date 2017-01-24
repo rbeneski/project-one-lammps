@@ -1,0 +1,67 @@
+#number of particles
+variable npart equal 500
+
+units		real
+dimension	3
+boundary	p p p
+atom_style	molecular
+atom_modify	sort 10000 20
+
+#define 3D box region
+region box block 0 180 0 180 0 180
+
+#create simulation box with 1 type of particle. Atoms are bonded together
+create_box 1 box bond/types 1 extra/bond/per/atom 1 
+
+#put particles with type 1 randomly into the box
+create_atoms 1 random ${npart} 324523 box
+
+#create interaction potential between molecules
+pair_style lj/cut 18.033
+pair_coeff * * 0.2018 3.6154
+mass * 28.0
+
+#setting the bonds and coefficient values of K and r0 
+bond_style	harmonic
+bond_coeff	*	90.167	1.10
+
+#create neighbor list
+neighbor		2.0 bin
+neigh_modify	every 1 delay 0 check yes
+
+#create molecule
+molecule	Ngas	Nmolecule.dimer
+
+#velocity distribution corresponding to a temperature of 87 K
+velocity all create 87 34234123 dist gaussian
+
+#minimize energy first to avoid overlapping particles
+minimize 1e-4 1e-4 1000 1000
+reset_timestep 0
+
+#save images
+#shell "mkdir N3D2"
+#shell "rm N3D2/*"
+#dump		img all image 1000 img/T*.jpg	type type adiam 1.0 zoom 1.7
+#dump_modify	img backcolor white boxcolor black
+#dump_modify	img pad 6
+
+##save video
+#dump		video all movie 100 movie.mp4	type type adima 1.0 zoom 1.7
+#dump_modify	video backcolor white boxcolor black
+#
+#integrate Newtons equation of motion with stochastic kicks and friction
+#the kicks and friction model the effect of temperature
+
+fix integrator all nve
+
+#output time step, temperature, average kinetic and potential energy, pressure
+thermo_style custom step temp ke pe press
+#compute 1 all pressure NULL
+thermo		100
+
+#time step of integrator
+timestep	0.001
+
+#number of steps to run
+run		100000
